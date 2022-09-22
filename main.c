@@ -1,21 +1,20 @@
 /*
 
-Implemente uma lista sequencial de inteiros, utilizando o tipo vetor, de
-inteiros com as seguintes operações:
+Implemente uma lista encadeada de inteiros, utilizando alocação dinâmica de
+memória, com as seguintes operações:
 
 1. Criação da lista vazia;
 2. Verificar se a lista está vazia;
-3. Verificar se a lista está cheia;
-4. Obter o tamanho da lista;
-5. Obter/modificar o valor do elemento de uma determinada
-posição na lista;
-6. Inserir um elemento em uma determinada posição;
-7. Retirar um elemento de uma determinada posição.
+3. Obter o tamanho da lista;
+4. Obter/modificar o valor do elemento de uma determinada posição na lista;
+5. Inserir um elemento em uma determinada posição;
+6. Retirar um elemento de uma determinada posição.
+7. Imprimir os elementos de toda a lista.
 
-As posições válidas de uma lista são 1 até o tamanho da lista, ou seja, se a
-lista tem 3 elementos, as posições válidas são 1, 2 e 3. Não confunda com os
-índices do vetor.
+Observações de implementação:
 
+- As posições válidas de uma lista são 1 até o tamanho da lista, ou seja, se a
+lista tem 3 elementos, as posições válidas são 1, 2 e 3.
 
 */
 
@@ -23,34 +22,284 @@ lista tem 3 elementos, as posições válidas são 1, 2 e 3. Não confunda com o
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct {
-  int tamAtual;
-  int tamMax;
-  int *dados;
-} tLista;
+typedef struct elemento {
+  int valor;                // valor que quero armazenar
+  struct elemento *proximo; // ponteiro para o proximo elem
+} No;
 
-tLista cria_lista(int tamMax);
-int lista_vazia(tLista *lista);
-int lista_cheia(tLista *lista);
-int lista_tamanho(tLista *lista);
-int obter_ou_modificar_elemento(tLista *lista, int novoValor, int posicao,
-                                bool modificar);
-int insere_elemento(tLista *lista, int novoElemento, int posicao);
-int remove_elemento(tLista *lista, int posicao);
-void print_lista(tLista lista);
+typedef struct {
+  No *inicio;
+  No *fim;
+  int tamanho;
+} Lista;
+
+Lista *cria_lista();
+int lista_vazia(Lista *lista);
+int obtem_tamanho(Lista *lista);
+int modifica_elemento(Lista *lista, int valor, int posicao);
+int insere_elemento(Lista *lista, int valor, int posicao);
+int remove_elemento(Lista *lista, int posicao);
+int imprime_lista(Lista *lista);
+
+// 1) cria lista vazia
+Lista *cria_lista() {
+  Lista *lista = (Lista *)malloc(sizeof(Lista));
+
+  lista->inicio = NULL;
+  lista->fim = NULL;
+  lista->tamanho = 0;
+  printf("Lista criada com sucesso!!\n\n");
+
+  return lista;
+}
+
+// 2) verifica se a lista está vazia
+int lista_vazia(Lista *lista) {
+  if (lista->inicio == NULL) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+// 3) obtem tamanho (e imprime lista)
+int obtem_tamanho(Lista *lista) {
+  // condições de falha
+  if (lista == NULL) {
+    printf("Lista Inexistente\n");
+    return -1;
+  } else if (lista->inicio == NULL) {
+    printf("Lista Vazia\n");
+    return -1;
+  }
+
+  // imprime tamanho da lista
+  printf("\nTamanho atual da lista: %d\n", lista->tamanho);
+
+  /*
+  // atual aponta para inicio da lista
+  No *atual = lista->inicio;
+  int index = 1; // indice do nó na lista
+  // percorre a lista imprimindo cada valor
+  while (atual != NULL) {
+    printf("No %d - Valor: %d\n", index, atual->valor);
+    index++;
+    atual = atual->proximo;
+  }*/
+
+  // imprime os elementos da lista para usuario conferir se o tamanho informado
+  // procede
+  imprime_lista(lista);
+
+  return 0;
+}
+
+// 4) modifica elemento na posicao da lista
+int modifica_elemento(Lista *lista, int valor, int posicao) {
+  // condições de falha
+  if (lista == NULL) {
+    printf("Lista Inexistente\n");
+    return -1;
+  } else if (lista->inicio == NULL) {
+    printf("Lista Vazia\n");
+    return -1;
+  }
+
+  // escrever funcao de obter
+
+  // só permite alteração em posição válida na lista
+  if ((posicao < 1) || (posicao > lista->tamanho)) {
+    printf("Posição %d inválida para modificação\n", posicao);
+    return -1;
+  }
+
+  // atual aponta para inicio da lista
+  No *atual = lista->inicio;
+
+  // percorre as posicoes ate chegar no elemento que sera alterado
+  for (int i = 1; i < posicao; i++) {
+    atual = atual->proximo;
+  }
+
+  int valorAntigo = atual->valor;
+
+  // altera o valor propriamente dito
+  atual->valor = valor;
+
+  printf("Valor anterior: %d\nNovo valor: %d\n", valorAntigo, atual->valor);
+
+  return 0;
+}
+
+// 5) insere elemento na posicao da lista
+int insere_elemento(Lista *lista, int valor, int posicao) {
+  // condições de falha
+  if (lista == NULL) {
+    printf("Lista Inexistente\n");
+    return -1;
+  }
+
+  // só permite inserção em posição válida na lista
+  if ((posicao < 1) || (posicao > lista->tamanho + 1)) {
+    printf("Posição %d inválida para inserção\n", posicao);
+    return -1;
+  }
+
+  // aloca memoria para novo nó na lista
+  No *novo = (No *)malloc(sizeof(No));
+  // testa falha na alocação de memória
+  if (novo == NULL) {
+    return -1;
+  }
+  // atribui o valor para atributo do nó
+  novo->valor = valor;
+
+  // caso a lista esteja vazia
+  if (lista->inicio == NULL) {
+    novo->proximo = NULL; // proximo do novo elemento eh NULL
+    lista->inicio = novo; // inicio da lista aponta para no criado
+    lista->fim = novo;    // lista so tem um elemento
+
+    // insere na posição da lista
+  } else {
+    // atual aponta para inicio da lista
+    No *atual = lista->inicio;
+
+    // inserir no inicio
+    if (posicao == 1) {
+      lista->inicio = novo;
+      novo->proximo = atual;
+
+      // insere no meio ou final
+    } else {
+      // percorre as posicoes ate chegar no elemento ANTERIOR aa posicao de
+      // insercao
+      for (int i = 1; i < posicao - 1; i++) {
+        atual = atual->proximo;
+      }
+
+      // auxiliar vai guardar o elemento da posicao a ser inserida
+      No *aux = atual->proximo;
+      // proximo do atual passa a ser o novo elemento inserido
+      atual->proximo = novo;
+      // proximo do novo passa a ser o auxliar guardado antes
+      novo->proximo = aux;
+
+      // se a insercao é apos o ultim elemento da lista, atualiza fim
+      if (posicao == lista->tamanho + 1) {
+        lista->fim = novo;
+      }
+    }
+  }
+
+  lista->tamanho++;
+  return 0;
+}
+
+// 6) remove elemento na posição específica
+int remove_elemento(Lista *lista, int posicao) {
+
+  // condições de falha
+  if (lista == NULL) {
+    printf("Lista Inexistente\n");
+    return -1;
+  } else if (lista->inicio == NULL) {
+    printf("Lista Vazia\n");
+    return -1;
+  }
+
+  // só permite remoção em posição válida na lista
+  if ((posicao < 1) || (posicao > lista->tamanho)) {
+    printf("Posição %d inválida para remoção\n", posicao);
+    return -1;
+  }
+
+  ///  1 2 3 4
+
+  ///  ()
+
+  // atual aponta para inicio da lista
+  No *atual = lista->inicio;
+
+  // remover do inicio
+  if (posicao == 1) {
+    // inicio da lista passa a ser proximo elemento
+    lista->inicio = atual->proximo;
+    // libera memoria eliminando elemento
+    free(atual);
+
+    // remove no meio ou final
+  } else {
+    // percorre as posicoes ate chegar no elemento ANTERIOR aa posicao de
+    // remoção
+    for (int i = 1; i < posicao - 1; i++) {
+      atual = atual->proximo;
+    }
+
+    // auxiliar vai guardar o elemento da posicao a ser removida
+    No *aux = atual->proximo;
+
+    // o ponteiro proximo do elemento atual passa a apontar para o proximo do
+    // que sera removido
+    atual->proximo = aux->proximo;
+
+    // libera memoria do elemento a ser removido
+    free(aux);
+
+    // se a remocao é o ultimo elemento, atualiza fim para o atual
+    if (posicao == lista->tamanho) {
+      lista->fim = atual;
+    }
+  }
+
+  lista->tamanho--;
+  return 0;
+}
+
+// 7) imprime lista
+int imprime_lista(Lista *lista) {
+  if (lista == NULL) {
+    printf("\nLista Inexistente\n");
+    return 0;
+  }
+
+  if (lista->inicio == NULL) {
+    printf("\nLista Vazia\n");
+    return 0;
+  }
+
+  printf("\nElementos da Lista:\n");
+
+  // atual aponta para inicio da lista
+  No *atual = lista->inicio;
+
+  int index = 1; // indice do nó na lista
+  // percorre a lista imprimindo cada valor
+  while (atual != NULL) {
+    printf("No %d - Valor: %d\n", index, atual->valor);
+    index++;
+    atual = atual->proximo;
+  }
+  return 0;
+}
+
+ 
 
 int main(void) {
 
-  tLista lista;
+  // declaração de variáveis
+  Lista *lista;
   int opcao;
+  int valor;
+  int posicao;
+  int resultado;
 
   while (opcao != 0) {
 
-    printf(
-        "\n[1] - Criar lista\n[2] - Verifica Vazia\n[3] - Verifica Cheia\n[4] "
-        "- Obter tamanho\n[5] - Obter/Modificar Valor\n[6] - Inserir "
-        "ELemento\n[7] - Remover Elemento\n[8] - Imprime Lista\n[0] - Sair\n");
-    printf("\nDigite a opção : ");
+    printf("\n[1] - Criar lista\n[2] - Verifica lista vazia\n[3] - Obter "
+           "tamanho \n[4] - Modificar Elemento\n[5] - Inserir elemento\n[6] - "
+           "Remover Elemento\n[7] - Imprimir\n[0] - Sair\n");
+    printf("\nDigite a opção: ");
     scanf("\n\n%d", &opcao);
 
     fflush(stdin);   // limpa bufffer para windows
@@ -59,17 +308,12 @@ int main(void) {
     switch (opcao) {
     case 1:
       printf("\nOpção 1 [Criar lista] escolhida\n");
-      int tamanhoCriacao;
-      printf("digite o tamanho: ");
-      fflush(stdin);
-      __fpurge(stdin);
-      scanf("%d", &tamanhoCriacao);
-      lista = cria_lista(tamanhoCriacao);
+      lista = cria_lista();
       break;
 
     case 2:
       printf("\nOpção 2 [Verifica Vazia] escolhida\n");
-      int estaVazia = lista_vazia(&lista);
+      int estaVazia = lista_vazia(lista);
       if (estaVazia == 1) {
         printf("\nLista Vazia!!!\n");
       } else {
@@ -78,211 +322,54 @@ int main(void) {
       break;
 
     case 3:
-      printf("\nOpção 3 [Verifica Cheia] escolhida\n");
-      int estaCheia = lista_cheia(&lista);
-      if (estaCheia == 1) {
-        printf("\nLista Cheia!!!\n");
-      } else {
-        printf("\nLista NÃO Cheia!!!\n");
-      }
+      printf("\nOpção 3 [Obter tamanho] escolhida\n");
+      obtem_tamanho(lista);
       break;
 
     case 4:
-      printf("\nOpção 4 [Obter Tamanho] escolhida\n");
-      int tamanhoLista = lista_tamanho(&lista);
-      printf("\nTamanho da Lista: %d\n", tamanhoLista);
+      printf("\nOpção 4 [Modificar Elemento] escolhida\n");
+      printf("Digite a posição a modificar: \n");
+      scanf("%d", &posicao);
+      printf("Digite o valor a ser alterado: \n");
+      scanf("%d", &valor);
+      resultado = modifica_elemento(lista, valor, posicao);
+      if (resultado == 0) {
+        printf("Elemento alterado com sucesso\n");
+      } else {
+        printf("Elemento não alterado\n");
+      }
       break;
 
     case 5:
-      printf("\nOpção 6 [Obter/Modificar Elemento] escolhida\n");
-      int posicaoModificar;
-      char simOuNao;
-      int novoElementoModificado;
-      bool modificar = false;
+      printf("Digite o valor a ser inserido: \n");
+      scanf("%d", &valor);
+      printf("Digite a posição: \n");
+      scanf("%d", &posicao);
 
-      printf("digite a posição: ");
-      fflush(stdin);
-      __fpurge(stdin);
-      scanf("%d", &posicaoModificar);
-
-      printf("deseja modificar o elemento (S/N)? ");
-      fflush(stdin);
-      __fpurge(stdin);
-      scanf("%c", &simOuNao);
-
-      if (simOuNao == 'S') {
-        modificar = true;
-        printf("digite o novo valor do elemento: ");
-        fflush(stdin);
-        __fpurge(stdin);
-        scanf("%d", &novoElementoModificado);
+      resultado = insere_elemento(lista, valor, posicao);
+      if (resultado == 0) {
+        printf("Elemento inserido com sucesso\n");
+      } else {
+        printf("Elemento não inserido\n");
       }
-      obter_ou_modificar_elemento(&lista, novoElementoModificado,
-                                  posicaoModificar, modificar);
-
       break;
 
     case 6:
-      printf("\nOpção 6 [Insere Elemento] escolhida\n");
-      int novoElemento;
-      int posicaoInsercao;
-      printf("digite elemento: ");
-      fflush(stdin);
-      __fpurge(stdin);
-      scanf("%d", &novoElemento);
-      printf("digite a posição: ");
-      fflush(stdin);
-      __fpurge(stdin);
-      scanf("%d", &posicaoInsercao);
-      insere_elemento(&lista, novoElemento, posicaoInsercao);
+      printf("Digite a posição para remover: ");
+      scanf("%d", &posicao);
+      resultado = remove_elemento(lista, posicao);
+      if (resultado == 0) {
+        printf("Elemento removido com sucesso\n");
+      } else {
+        printf("Elemento não removido\n");
+      }
       break;
 
     case 7:
-      printf("\nOpção 7 [Remove Elemento] escolhida\n");
-      int posicaoRemocao;
-      printf("digite a posição: ");
-      fflush(stdin);
-      __fpurge(stdin);
-      scanf("%d", &posicaoRemocao);
-      remove_elemento(&lista, posicaoRemocao);
-      break;
-
-    case 8:
-      printf("\nOpção 8 [Imprime Lista] escolhida\n");
-      print_lista(lista);
-      break;
-
-    case 0:
-      printf("\nOpção 0 [Sair] escolhida\n");
-      return 0;
+      imprime_lista(lista);
       break;
     }
   }
 
   return 0;
-}
-
-/// 1) cria lista
-tLista cria_lista(int tamMax) {
-  tLista lista;
-
-  lista.tamAtual = 0;
-  lista.tamMax = tamMax;
-  lista.dados = (int *)malloc(lista.tamMax * sizeof(int));
-
-  printf("Lista criada com sucesso!!\n\n");
-  return lista;
-};
-
-/// 2) verifica se lista esta vazia
-int lista_vazia(tLista *lista) {
-  if (lista->tamAtual == 0) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-// 3) verifica se a lista esta cheia
-int lista_cheia(tLista *lista) {
-  if (lista->tamAtual == lista->tamMax) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-// 4) informa tamanho da lista
-int lista_tamanho(tLista *lista) { return (lista->tamAtual); }
-
-// 5) obter/modificar elemento na lista
-int obter_ou_modificar_elemento(tLista *lista, int novoValor, int posicao,
-                                bool modificar) {
-
-  // nao pode extrapolar os limites da lista
-  if (posicao < 1 || posicao > lista->tamMax) {
-    printf("\nNão é possível obter/modificar posições que extrapolem os "
-           "limites da Lista\n");
-    return 0;
-  } else if (posicao > lista->tamAtual) {
-    printf("\nSó é possível obter/modificar até a posição %d\n",
-           lista->tamAtual + 1);
-    return 0;
-  }
-
-  // se a flag vem como true, usuario deseja modificar o valor do elemento
-  if (modificar) {
-    lista->dados[posicao - 1] = novoValor;
-    printf("\nElemento modificado com sucesso: %d\n",
-           lista->dados[posicao - 1]);
-    // senao, usuario so quer obter o elemento da posicao
-  } else {
-    printf("\nElemento da posição %d: %d\n", posicao,
-           lista->dados[posicao - 1]);
-  }
-
-  return lista->dados[posicao - 1];
-}
-
-// 6) inserir um elemento em uma determinada posição
-int insere_elemento(tLista *lista, int novoElemento, int posicao) {
-  // nao pode inserir se a lista já está cheia
-  if (lista_cheia(lista)) {
-    printf("\nLista já se encontra cheia, impossível inserir elementos: \n");
-    return 0;
-    // nao pode inserir se a posição extrapolar limites da lista
-  } else if (posicao < 1 || posicao > lista->tamMax) {
-    printf("\nNão é possível inserir em posições que extrapolem os limites da "
-           "Lista\n");
-    return 0;
-  } else if (posicao > (lista->tamAtual + 1)) {
-    printf("\nSó é possível inserir até a posição %d\n", lista->tamAtual + 1);
-    return 0;
-  }
-
-  for (int i = lista->tamAtual; i >= posicao; i--) {
-    lista->dados[i] = lista->dados[i - 1];
-  }
-
-  lista->dados[posicao - 1] = novoElemento;
-  lista->tamAtual++;
-
-  printf("\nElemento inserido com sucesso: %d\n", lista->dados[posicao - 1]);
-  return lista->dados[posicao - 1];
-}
-
-// 7) remover um elemento em uma determinada posição
-int remove_elemento(tLista *lista, int posicao) {
-  // nao pode remover se a lista está vazia
-  if (lista_vazia(lista)) {
-    printf("\nLista encontra-se vazia, impossível remover elementos \n");
-    return 0;
-    // nao pode inserir se a posição extrapolar limites da lista
-  } else if (posicao < 1 || posicao > lista->tamMax) {
-    printf("\nNão é possível remover em posições que extrapolem os limites da "
-           "Lista\n");
-    return 0;
-  } else if (posicao > lista->tamAtual) {
-    printf("\nSó é possível remover até a posição %d\n", lista->tamAtual);
-    return 0;
-  }
-
-  int elementoRemovido = lista->dados[posicao - 1];
-
-  for (int i = posicao - 1; i < lista->tamAtual - 1; i++) {
-    lista->dados[i] = lista->dados[i + 1];
-  }
-  lista->tamAtual--;
-
-  return elementoRemovido;
-}
-
-// 8) imprime a lista
-void print_lista(tLista lista) {
-  printf("Lista tamanho atual:  %d \n", lista.tamAtual);
-  printf("Lista tamanho maximo: %d \n", lista.tamMax);
-
-  for (int i = 0; i < lista.tamAtual; i++) {
-    printf(" --> Elem(%d): %d\n", i + 1, lista.dados[i]);
-  }
 }
